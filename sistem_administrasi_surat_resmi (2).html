@@ -1,0 +1,1535 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Administrasi & TTD Digital - Karang Taruna RW 16</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:ital,wght=0,300;0,400;0,500;0,600;0,700;1,400&family=Inter:wght=300;400;500;600;700&family=Tinos:ital,wght=0,400;0,700;1,400&family=EB+Garamond:ital,wght=0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- html2pdf.js untuk cetak dokumen -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        /* Style kertas A4 */
+        .paper-preview {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 25mm 20mm;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            position: relative;
+            box-sizing: border-box;
+        }
+        .editor-content:focus {
+            outline: none;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="h-screen overflow-hidden flex flex-col">
+
+    <!-- Navigation Bar -->
+    <header class="bg-indigo-950 text-white py-3.5 px-6 shadow-md flex items-center justify-between no-print flex-shrink-0 z-10">
+        <div class="flex items-center space-x-3">
+            <div class="bg-white text-indigo-950 p-2 rounded-lg font-bold text-xl shadow-inner flex items-center justify-center">
+                <i class="fa-solid fa-file-invoice text-2xl text-indigo-700"></i>
+            </div>
+            <div>
+                <h1 class="text-md font-bold tracking-wide uppercase">Kartar RW 16 Digital</h1>
+                <p class="text-xs text-indigo-200">Karang Taruna Pedurungan Baru RW 16, Kota Semarang</p>
+            </div>
+        </div>
+        
+        <!-- Menu Navigasi Utama -->
+        <div class="flex items-center space-x-3">
+            <button onclick="switchTab('tab-editor')" id="btn-tab-editor" class="bg-indigo-800 text-white px-4 py-2 rounded-lg font-medium text-sm hover:bg-indigo-700 transition flex items-center gap-2 border-b-2 border-white">
+                <i class="fa-solid fa-pen-nib"></i> Pembuat Surat
+            </button>
+            <button onclick="switchTab('tab-templates')" id="btn-tab-templates" class="bg-indigo-950 text-indigo-200 px-4 py-2 rounded-lg font-medium text-sm hover:bg-indigo-900 transition flex items-center gap-2">
+                <i class="fa-solid fa-cubes"></i> Kelola Template
+            </button>
+            <button onclick="switchTab('tab-signatures')" id="btn-tab-signatures" class="bg-indigo-950 text-indigo-200 px-4 py-2 rounded-lg font-medium text-sm hover:bg-indigo-900 transition flex items-center gap-2">
+                <i class="fa-solid fa-users-gear"></i> Database Pejabat
+            </button>
+        </div>
+
+        <!-- SWITCHER AKUN (SIMULASI LOGIN) -->
+        <div class="flex items-center space-x-2 bg-indigo-900/60 p-1.5 px-3 rounded-xl border border-indigo-700/50">
+            <div class="text-right">
+                <p class="text-[10px] text-indigo-300 font-bold uppercase tracking-wider">Peran Pengguna Saat Ini</p>
+                <p id="current-user-display" class="text-xs font-semibold text-white">Admin (Sekretariat)</p>
+            </div>
+            <div class="relative">
+                <select id="user-role-select" onchange="switchUserRole(this.value)" class="bg-indigo-950 border border-indigo-700 rounded-lg text-xs py-1.5 px-2.5 text-white font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer">
+                    <!-- Terisi dinamis -->
+                </select>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace Area -->
+    <main class="flex-1 flex overflow-hidden">
+        
+        <!-- ================= TAB 1: PEMBUAT & GENERATOR SURAT ================= -->
+        <section id="tab-editor" class="flex-1 flex overflow-hidden">
+            
+            <!-- Sidebar Pengaturan (Kiri) -->
+            <div class="w-96 bg-white border-r border-slate-200 flex flex-col overflow-y-auto p-5 space-y-6 no-print flex-shrink-0">
+                
+                <!-- Pilihan Template -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">1. Pilih Template Dasar</label>
+                    <div class="relative">
+                        <select id="template-select" onchange="loadTemplate()" class="w-full bg-slate-50 border border-slate-300 rounded-lg py-2.5 px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                            <!-- Terisi dinamis -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Custom Font Selector -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Gaya Font Dokumen</label>
+                    <select id="font-family-select" onchange="changeDocumentFont(this.value)" class="w-full bg-slate-50 border border-slate-300 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                        <option value="Fira Sans">Fira Sans (Modern & Bersih)</option>
+                        <option value="Tinos">Tinos (Serif Resmi Indonesia)</option>
+                        <option value="EB Garamond">EB Garamond (Elegan & Klasik)</option>
+                        <option value="Inter">Inter (Sederhana)</option>
+                    </select>
+                </div>
+
+                <!-- Nomor Surat dengan AI Generator -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">2. Nomor Surat Resmi</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="input-nomor-surat" oninput="updateLiveFields()" class="flex-1 bg-slate-50 border border-slate-300 rounded-lg py-2 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" placeholder="Contoh: 012/KT-PB16/VI/2026">
+                        <button onclick="generateAiReferenceNumber()" class="bg-indigo-50 border border-indigo-200 text-indigo-700 px-3 rounded-lg text-xs hover:bg-indigo-100 transition flex items-center gap-1" title="Generate Nomor pakai AI">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> AI
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Judul/Perihal -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Judul / Perihal Surat</label>
+                    <input type="text" id="input-judul-surat" oninput="updateLiveFields()" class="w-full bg-slate-50 border border-slate-300 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" placeholder="Contoh: SURAT UNDANGAN RAPAT">
+                </div>
+
+                <!-- Asisten Penulis Surat AI -->
+                <div class="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 p-4 rounded-xl space-y-3 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-indigo-950 flex items-center gap-1.5 uppercase tracking-wider">
+                            <i class="fa-solid fa-robot text-indigo-600 animate-bounce"></i> Asisten Surat AI
+                        </span>
+                        <span class="bg-indigo-200 text-indigo-800 text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase">Aktif</span>
+                    </div>
+                    <p class="text-[11px] text-slate-600">Ketik instruksi singkat, AI akan merangkai paragraf surat resmi secara instan.</p>
+                    <textarea id="ai-prompt-input" rows="2" class="w-full border border-indigo-200 rounded-lg p-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white" placeholder="cth: Undangan rapat koordinasi karang taruna tanggal 15 Juni jam 7 malam di Balai RW 16..."></textarea>
+                    <button onclick="generateLetterContentWithAi()" class="w-full bg-indigo-700 hover:bg-indigo-800 text-white font-bold py-2 rounded-lg text-xs transition flex items-center justify-center gap-1.5 shadow">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Buat Isi Surat Otomatis
+                    </button>
+                </div>
+
+                <!-- Penandatangan Dinamis Checklist -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider">3. Ajukan Penandatangan</label>
+                        <span id="signer-count-badge" class="bg-indigo-100 text-indigo-800 text-[10px] px-2 py-0.5 rounded-full font-bold">0 Diajukan</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mb-3 leading-relaxed">Tandai pejabat yang wajib menandatangani surat ini. Surat harus disetujui pejabat sebelum TTD terbit.</p>
+                    
+                    <div id="signers-checkbox-list" class="space-y-2 max-h-48 overflow-y-auto pr-1 border border-slate-100 p-2 rounded-lg bg-slate-50">
+                        <!-- Terisi dinamis -->
+                    </div>
+                </div>
+
+                <!-- Aksi Utama -->
+                <div class="pt-4 border-t border-slate-100 mt-auto space-y-2.5">
+                    <button onclick="downloadPDF()" class="w-full bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-emerald-100 hover:bg-emerald-700 active:scale-95 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-file-pdf text-lg"></i> Unduh PDF Resmi
+                    </button>
+                    <div class="text-center">
+                        <span class="text-[10px] text-slate-400 block mt-1"><i class="fa-solid fa-shield-halved"></i> Hanya bisa diunduh setelah disetujui semua penandatangan.</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Workspace Kertas / Live Preview (Tengah) -->
+            <div class="flex-1 bg-slate-200 overflow-y-auto p-8 flex flex-col items-center gap-6 relative">
+                
+                <!-- WYSIWYG Floating Toolbar -->
+                <div id="editor-toolbar" class="bg-white px-4 py-2 rounded-full shadow-lg border border-slate-200 flex items-center space-x-1 no-print z-20">
+                    <button onclick="formatDoc('bold')" class="p-2 text-slate-600 hover:text-indigo-600 hover:bg-slate-50 rounded-full w-9 h-9 flex items-center justify-center transition" title="Tebal (Ctrl+B)">
+                        <i class="fa-solid fa-bold"></i>
+                    </button>
+                    <button onclick="formatDoc('italic')" class="p-2 text-slate-600 hover:text-indigo-600 hover:bg-slate-50 rounded-full w-9 h-9 flex items-center justify-center transition" title="Miring (Ctrl+I)">
+                        <i class="fa-solid fa-italic"></i>
+                    </button>
+                    <button onclick="formatDoc('underline')" class="p-2 text-slate-600 hover:text-indigo-600 hover:bg-slate-50 rounded-full w-9 h-9 flex items-center justify-center transition" title="Garis Bawah (Ctrl+U)">
+                        <i class="fa-solid fa-underline"></i>
+                    </button>
+                    <div class="h-6 w-px bg-slate-200 mx-1"></div>
+                    <button onclick="formatDoc('justifyLeft')" class="p-2 text-slate-600 hover:text-indigo-600 hover:bg-slate-50 rounded-full w-9 h-9 flex items-center justify-center transition" title="Rata Kiri">
+                        <i class="fa-solid fa-align-left"></i>
+                    </button>
+                    <button onclick="formatDoc('justifyCenter')" class="p-2 text-slate-600 hover:text-indigo-600 hover:bg-slate-50 rounded-full w-9 h-9 flex items-center justify-center transition" title="Rata Tengah">
+                        <i class="fa-solid fa-align-center"></i>
+                    </button>
+                    <button onclick="formatDoc('justifyRight')" class="p-2 text-slate-600 hover:text-indigo-600 hover:bg-slate-50 rounded-full w-9 h-9 flex items-center justify-center transition" title="Rata Kanan">
+                        <i class="fa-solid fa-align-right"></i>
+                    </button>
+                    <button onclick="formatDoc('justifyFull')" class="p-2 text-slate-600 hover:text-indigo-600 hover:bg-slate-50 rounded-full w-9 h-9 flex items-center justify-center transition" title="Rata Kanan-Kiri">
+                        <i class="fa-solid fa-align-justify"></i>
+                    </button>
+                    <div class="h-6 w-px bg-slate-200 mx-1"></div>
+                    <button onclick="formatDoc('insertUnorderedList')" class="p-2 text-slate-600 hover:text-indigo-600 hover:bg-slate-50 rounded-full w-9 h-9 flex items-center justify-center transition" title="Daftar Bullet">
+                        <i class="fa-solid fa-list-ul"></i>
+                    </button>
+                    <button onclick="formatDoc('removeFormat')" class="p-2 text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-full w-9 h-9 flex items-center justify-center transition" title="Hapus Format">
+                        <i class="fa-solid fa-eraser"></i>
+                    </button>
+                </div>
+
+                <!-- Template Kertas A4 Container -->
+                <div id="pdf-container" class="relative">
+                    <div id="paper-element" class="paper-preview" style="font-family: 'Fira Sans', sans-serif;">
+                        
+                        <!-- Header / Kop Surat Karang Taruna Pedurungan Baru RW 16 -->
+                        <div id="default-kop-surat" class="kop-surat mb-6 border-b-4 border-double border-black pb-3 text-center relative">
+                            <!-- Logo Karang Taruna (SVG) ditaruh di pojok kiri kop surat -->
+                            <div class="absolute left-0 top-0 w-16 h-16 flex items-center justify-center">
+                                <svg viewBox="0 0 100 100" class="w-14 h-14 text-orange-600" fill="currentColor">
+                                    <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="4"/>
+                                    <path d="M50 15 L80 40 L65 75 L35 75 L20 40 Z" fill="currentColor" opacity="0.8"/>
+                                    <path d="M50 30 L65 45 L50 70 L35 45 Z" fill="#fff"/>
+                                </svg>
+                            </div>
+                            <h2 contenteditable="true" class="text-md font-bold uppercase tracking-wider leading-tight focus:bg-slate-50 focus:outline-dashed focus:outline-1 focus:outline-indigo-300 px-1 rounded transition" title="Klik untuk mengedit Nama Organisasi">KARANG TARUNA PEDURUNGAN BARU</h2>
+                            <h3 contenteditable="true" class="text-md font-semibold uppercase tracking-wider leading-tight focus:bg-slate-50 focus:outline-dashed focus:outline-1 focus:outline-indigo-300 px-1 rounded transition mt-1" title="Klik untuk mengedit Sub-Organisasi / Wilayah">RW 16 KELURAHAN PEDURUNGAN BARU</h3>
+                            <p contenteditable="true" class="text-[9px] italic mt-1.5 focus:bg-slate-50 focus:outline-dashed focus:outline-1 focus:outline-indigo-300 px-1 rounded transition" title="Klik untuk mengedit Sekretariat & Kontak">Sekretariat: Balai RW 16, Kel. Pedurungan Baru, Kec. Pedurungan, Kota Semarang 50192 | Email: kartarpedurunganbaru16@gmail.com</p>
+                        </div>
+
+                        <!-- Judul & No Surat -->
+                        <div id="default-meta-surat" class="text-center mb-6">
+                            <h4 id="live-judul-surat" class="text-md font-bold uppercase underline tracking-wide">SURAT PENGANTAR ANGGARAN</h4>
+                            <p class="text-sm mt-0.5">Nomor: <span id="live-nomor-surat">012/KT-PB16/VI/2026</span></p>
+                        </div>
+
+                        <!-- Area Workspace Dinamis -->
+                        <div id="document-render-zone" class="relative min-h-[450px]">
+                            <!-- Contenteditable Area -->
+                            <div id="live-isi-surat" class="editor-content text-justify text-sm leading-relaxed min-h-[400px] mb-8" contenteditable="true">
+                                <!-- Isi default dimuat saat startup -->
+                            </div>
+                        </div>
+
+                        <!-- Blok Tanda Tangan Grid -->
+                        <div id="live-signatures-grid-container" class="signature-section mt-12">
+                            <div id="live-signatures-grid" class="grid gap-6 justify-center">
+                                <!-- Terisi dinamis -->
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- ================= TERMINAL PERSETUJUAN PEJABAT (Elderly-Friendly UI) ================= -->
+                <div class="w-full max-w-4xl bg-white border border-indigo-200 rounded-2xl shadow-xl p-6 no-print space-y-4">
+                    <div class="flex items-center justify-between border-b border-indigo-100 pb-3">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-key text-indigo-600"></i> Terminal Verifikasi & Persetujuan TTD
+                            </h3>
+                            <p class="text-xs text-slate-500">Khusus Pejabat: Lakukan persetujuan surat langsung tanpa bolak-balik fisik.</p>
+                        </div>
+                        <span class="bg-indigo-100 text-indigo-900 text-xs px-3 py-1 rounded-full font-bold">Mode Aman / Secure PIN</span>
+                    </div>
+
+                    <!-- Step Panduan -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs bg-slate-50 p-3 rounded-xl border border-slate-200">
+                        <div class="flex items-center gap-2">
+                            <span class="bg-indigo-600 text-white w-5 h-5 flex items-center justify-center rounded-full font-bold">1</span>
+                            <span>Pilih Akun Pejabat Anda (Di Atas Kanan)</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="bg-indigo-600 text-white w-5 h-5 flex items-center justify-center rounded-full font-bold">2</span>
+                            <span>Masukkan PIN Keamanan</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="bg-indigo-600 text-white w-5 h-5 flex items-center justify-center rounded-full font-bold">3</span>
+                            <span>Klik Setujui & Tempel TTD</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                        <div class="md:col-span-4">
+                            <label class="block text-xs font-bold text-slate-600 mb-1">1. Pejabat yang Bertindak</label>
+                            <select id="terminal-pejabat-select" class="w-full border border-slate-300 p-3 rounded-xl text-sm font-semibold bg-slate-50 focus:ring-2 focus:ring-indigo-500">
+                                <!-- Terisi dinamis -->
+                            </select>
+                        </div>
+                        <div class="md:col-span-3">
+                            <label class="block text-xs font-bold text-slate-600 mb-1">2. Masukkan PIN Anda</label>
+                            <input type="password" id="terminal-pin-input" class="w-full border border-slate-300 p-3 rounded-xl text-center font-mono text-lg tracking-widest focus:ring-2 focus:ring-indigo-500" placeholder="••••">
+                        </div>
+                        <div class="md:col-span-5">
+                            <button onclick="approveSignatureFromTerminal()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3.5 px-6 rounded-xl text-base shadow-md transition transform active:scale-95 flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-signature text-xl"></i> SETUJUI & TEMPEL TTD SEKARANG
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between text-[11px] text-slate-500 pt-1">
+                        <span><i class="fa-solid fa-lock text-emerald-600"></i> Terenkripsi & Terverifikasi Sistem Informasi RW 16</span>
+                        <span class="italic text-indigo-700">PIN Default Semua Pejabat: 1234 (Bisa diubah di database pejabat)</span>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ================= TAB 2: KELOLA TEMPLATE SURAT ================= -->
+        <section id="tab-templates" class="flex-1 hidden bg-slate-50 p-8 overflow-y-auto no-print">
+            <div class="max-w-5xl mx-auto space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-800">Manajemen Template Surat</h2>
+                        <p class="text-sm text-slate-500">Buat, modifikasi, dan simpan struktur draf surat organisasi sesuai kebutuhan admin.</p>
+                    </div>
+                    <button onclick="openTemplateFormModal()" class="bg-indigo-700 hover:bg-indigo-800 text-white font-semibold py-2.5 px-5 rounded-lg text-sm shadow transition flex items-center gap-2">
+                        <i class="fa-solid fa-circle-plus"></i> Tambah Template Baru
+                    </button>
+                </div>
+
+                <!-- Table Daftar Template -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100 border-b border-slate-200">
+                                <th class="p-4 text-xs font-bold uppercase text-slate-500 tracking-wider">Nama Template</th>
+                                <th class="p-4 text-xs font-bold uppercase text-slate-500 tracking-wider">Kode Unik</th>
+                                <th class="p-4 text-xs font-bold uppercase text-slate-500 tracking-wider">Pejabat Default</th>
+                                <th class="p-4 text-xs font-bold uppercase text-slate-500 tracking-wider text-right">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="templates-list-table-body" class="divide-y divide-slate-100 text-sm">
+                            <!-- Terisi dinamis -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB 3: DATABASE TANDA TANGAN / PEJABAT ================= -->
+        <section id="tab-signatures" class="flex-1 hidden bg-slate-50 p-8 overflow-y-auto no-print">
+            <div class="max-w-6xl mx-auto space-y-8">
+                
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-800">Database & Profil Pejabat Karang Taruna RW 16</h2>
+                        <p class="text-sm text-slate-500">Atur database pejabat, kepengurusan karang taruna, penasihat, dan kepengurusan RW.</p>
+                    </div>
+                    <button onclick="openSignatureModal()" class="bg-indigo-700 hover:bg-indigo-800 text-white font-semibold py-2.5 px-5 rounded-lg text-sm shadow transition flex items-center gap-2">
+                        <i class="fa-solid fa-signature"></i> Gambar TTD Pejabat Baru
+                    </button>
+                </div>
+
+                <!-- Grid Data Pejabat -->
+                <div id="signatures-grid-db" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Terisi dinamis -->
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ================= MODAL TAMBAH/EDIT TEMPLATE SURAT ================= -->
+    <div id="template-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden">
+            <div class="bg-indigo-950 text-white p-5 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-file-invoice text-xl"></i>
+                    <h3 id="template-modal-title" class="font-bold text-md">Tambah Template Surat Baru</h3>
+                </div>
+                <button onclick="closeTemplateFormModal()" class="text-indigo-200 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="form-template-index" value="">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Nama Template</label>
+                    <input type="text" id="form-template-name" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" placeholder="Contoh: Surat Pengantar Usaha">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Kode Unik (Alfanumerik saja)</label>
+                    <input type="text" id="form-template-code" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" placeholder="Contoh: surat_usaha">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Pejabat Default (Gunakan ID dipisahkan koma)</label>
+                    <input type="text" id="form-template-signers" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" placeholder="Contoh: sig-1, sig-2">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Isi Kerangka Surat (HTML/Teks Bebas)</label>
+                    <textarea id="form-template-content" rows="8" class="w-full border border-slate-300 font-mono text-xs rounded-lg py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" placeholder="Ketik kode HTML atau teks biasa di sini..."></textarea>
+                </div>
+            </div>
+            <div class="bg-slate-50 px-6 py-4 flex items-center justify-end space-x-3">
+                <button onclick="closeTemplateFormModal()" class="px-4 py-2 border border-slate-300 rounded-lg text-sm text-slate-600 hover:bg-slate-100 transition font-medium">Batal</button>
+                <button onclick="saveCustomTemplate()" class="px-5 py-2 bg-indigo-700 hover:bg-indigo-800 text-white rounded-lg text-sm font-semibold shadow transition">Simpan Template</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL GAMBAR TANDA TANGAN (SIGNATURE PAD) ================= -->
+    <div id="signature-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            
+            <div class="bg-indigo-950 text-white p-5 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-signature text-xl"></i>
+                    <h3 class="font-bold text-md">Gambarkan Tanda Tangan Baru</h3>
+                </div>
+                <button onclick="closeSignatureModal()" class="text-indigo-200 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-4">
+                
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Nama Lengkap Pejabat</label>
+                    <input type="text" id="modal-name" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" placeholder="Contoh: Aditya Pratama, S.Kom">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Jabatan / Posisi Kepengurusan</label>
+                    <input type="text" id="modal-position" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" placeholder="Contoh: Ketua Karang Taruna">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">PIN Persetujuan (4 Angka)</label>
+                    <input type="text" id="modal-pin" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" placeholder="Contoh: 1234">
+                </div>
+
+                <!-- Area Kanvas TTD -->
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Goreskan Tanda Tangan Anda</label>
+                        <button onclick="clearCanvas()" class="text-xs text-rose-500 hover:text-rose-700 transition font-medium flex items-center gap-1">
+                            <i class="fa-solid fa-trash-can"></i> Bersihkan Kanvas
+                        </button>
+                    </div>
+                    <div class="border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 overflow-hidden relative">
+                        <canvas id="sig-canvas" class="w-full h-44 cursor-crosshair block touch-none"></canvas>
+                        <div id="canvas-placeholder" class="pointer-events-none absolute inset-0 flex items-center justify-center text-xs text-slate-400">
+                            Gunakan Mouse / Layar Sentuh HP Anda untuk Menggambar
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="bg-slate-50 px-6 py-4 flex items-center justify-end space-x-3">
+                <button onclick="closeSignatureModal()" class="px-4 py-2 border border-slate-300 rounded-lg text-sm text-slate-600 hover:bg-slate-100 transition font-medium">Batal</button>
+                <button onclick="saveSignature()" class="px-5 py-2 bg-indigo-700 hover:bg-indigo-800 text-white rounded-lg text-sm font-semibold shadow transition">Simpan Pejabat Baru</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ================= MODAL EDIT DATA PEJABAT (INLINE EDIT) ================= -->
+    <div id="edit-pejabat-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div class="bg-indigo-950 text-white p-5 flex items-center justify-between">
+                <h3 class="font-bold text-md">Ubah Detail Profil Pejabat</h3>
+                <button onclick="closeEditPejabatModal()" class="text-indigo-200 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="edit-pejabat-id">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Nama Lengkap Pejabat</label>
+                    <input type="text" id="edit-pejabat-name" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Jabatan / Posisi</label>
+                    <input type="text" id="edit-pejabat-position" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">PIN Persetujuan (4 Angka)</label>
+                    <input type="text" id="edit-pejabat-pin" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                </div>
+            </div>
+            <div class="bg-slate-50 px-6 py-4 flex items-center justify-end space-x-3">
+                <button onclick="closeEditPejabatModal()" class="px-4 py-2 border border-slate-300 rounded-lg text-sm text-slate-600 hover:bg-slate-100 transition font-medium">Batal</button>
+                <button onclick="saveEditPejabat()" class="px-5 py-2 bg-indigo-700 hover:bg-indigo-800 text-white rounded-lg text-sm font-semibold shadow transition">Perbarui Data</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+        <span id="toast-message" class="text-sm font-medium">Sukses!</span>
+    </div>
+
+    <!-- ================= JAVASCRIPT LOGIC WORKFLOW ================= -->
+    <script>
+        // --- 1. SEED DATABASE PEJABAT AWAL ---
+        let signaturesDb = [
+            {
+                id: "sig-1",
+                name: "Aditya Pratama, S.Kom",
+                position: "Ketua Karang Taruna",
+                image: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='100' viewBox='0 0 200 100'><path d='M15,50 Q45,10 75,80 T135,20 T185,60' fill='none' stroke='indigo' stroke-width='3.5' stroke-linecap='round'/></svg>",
+                pin: "1234",
+                isActive: true
+            },
+            {
+                id: "sig-2",
+                name: "H. Ahmad Subarjo",
+                position: "Ketua RW 16",
+                image: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='100' viewBox='0 0 200 100'><path d='M25,60 C45,20 65,80 105,50 C145,20 165,80 185,40' fill='none' stroke='indigo' stroke-width='3.5' stroke-linecap='round'/></svg>",
+                pin: "1234",
+                isActive: true
+            },
+            {
+                id: "sig-3",
+                name: "Siti Aminah, S.E.",
+                position: "Sekretaris Karang Taruna",
+                image: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='100' viewBox='0 0 200 100'><path d='M20,30 Q85,90 125,40 T175,80' fill='none' stroke='indigo' stroke-width='3' stroke-linecap='round'/></svg>",
+                pin: "1234",
+                isActive: true
+            },
+            {
+                id: "sig-4",
+                name: "Budi Santoso, S.IP",
+                position: "Pembina Karang Taruna",
+                image: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='100' viewBox='0 0 200 100'><path d='M10,40 Q60,10 110,90 T190,50' fill='none' stroke='indigo' stroke-width='3' stroke-linecap='round'/></svg>",
+                pin: "1234",
+                isActive: true
+            },
+            {
+                id: "sig-5",
+                name: "Hendro Gunawan",
+                position: "Bendahara Karang Taruna",
+                image: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='100' viewBox='0 0 200 100'><path d='M15,70 Q90,30 115,80 T180,30' fill='none' stroke='indigo' stroke-width='3' stroke-linecap='round'/></svg>",
+                pin: "1234",
+                isActive: true
+            },
+            {
+                id: "sig-6",
+                name: "Drs. Wahyu Hidayat",
+                position: "Sekretaris RW",
+                image: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='100' viewBox='0 0 200 100'><path d='M30,30 Q90,20 100,70 T170,40' fill='none' stroke='indigo' stroke-width='3' stroke-linecap='round'/></svg>",
+                pin: "1234",
+                isActive: true
+            }
+        ];
+
+        // --- 2. SEED DATABASE TEMPLATE SURAT ---
+        let templatesDb = [
+            {
+                code: "surat_anggaran",
+                name: "Surat Pengantar Anggaran RW",
+                title: "SURAT PENGANTAR ANGGARAN",
+                defaultSigners: ["sig-1", "sig-3", "sig-2"],
+                content: `
+                    <p>Kepada Yth.<br><strong>Bapak Lurah Pedurungan Baru</strong><br>di Tempat</p>
+                    <br>
+                    <p>Dengan hormat,</p>
+                    <p>Sehubungan dengan rencana agenda kerja tahunan Karang Taruna Pedurungan Baru RW 16 dalam menyambut perayaan HUT RI Tingkat Kelurahan, kami bermaksud mengajukan rencana anggaran pelaksanaan kegiatan demi kelancaran agenda tersebut.</p>
+                    <br>
+                    <table style="width: 100%; margin-left: 10px;">
+                        <tbody>
+                            <tr>
+                                <td style="width: 180px; padding: 2px 0;">Jumlah Ajuan Dana</td>
+                                <td style="width: 15px;">:</td>
+                                <td><strong>Rp 4.500.000,- (Empat Juta Lima Ratus Ribu Rupiah)</strong></td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 2px 0;">Rencana Alokasi</td>
+                                <td>:</td>
+                                <td>Penyediaan sarana lomba, konsumsi warga, dan panggung apresiasi budaya.</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 2px 0;">Tanggal Kegiatan</td>
+                                <td>:</td>
+                                <td>Sabtu s/d Minggu, 15 - 16 Agustus 2026</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <br>
+                    <p>Adapun rincian proposal kegiatan dan lembar penggunaan anggaran operasional terlampir bersama dengan surat pengantar pengajuan anggaran resmi ini.</p>
+                    <br>
+                    <p>Demikian surat pengantar pengajuan anggaran ini kami sampaikan, atas perhatian dan dukungan Bapak Lurah kami ucapkan terima kasih yang sebesar-besarnya.</p>
+                `
+            },
+            {
+                code: "undangan_rapat",
+                name: "Surat Undangan Rapat Pleno",
+                title: "SURAT UNDANGAN RAPAT KOORDINASI",
+                defaultSigners: ["sig-1", "sig-3"],
+                content: `
+                    <p>Kepada Yth.<br><strong>Seluruh Pengurus Karang Taruna RW 16</strong><br>di Tempat</p>
+                    <br>
+                    <p>Mengharap kehadiran rekan-rekan pengurus Karang Taruna Pedurungan Baru RW 16 pada agenda Rapat Koordinasi Pleno yang akan diselenggarakan pada:</p>
+                    <br>
+                    <table style="width: 100%; margin-left: 20px;">
+                        <tbody>
+                            <tr>
+                                <td style="width: 150px; padding: 3px 0;">Hari / Tanggal</td>
+                                <td style="width: 15px;">:</td>
+                                <td>Sabtu, 20 Juni 2026</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 3px 0;">Waktu</td>
+                                <td>:</td>
+                                <td>Pukul 19.30 WIB s.d. Selesai</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 3px 0;">Tempat</td>
+                                <td>:</td>
+                                <td>Balai RW 16, Kelurahan Pedurungan Baru</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 3px 0;">Agenda Utama</td>
+                                <td>:</td>
+                                <td>Pembahasan kepengurusan baru & pemantapan draf program kerja.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <br>
+                    <p>Mengingat pentingnya koordinasi program kerja awal kepengurusan ini, kami sangat mengharapkan kehadiran tepat waktu dari seluruh jajaran pengurus tanpa terkecuali.</p>
+                    <br>
+                    <p>Demikian undangan ini kami sampaikan, atas kerja sama dan komitmen rekan-rekan sekalian kami sampaikan terima kasih.</p>
+                `
+            },
+            {
+                code: "surat_keterangan",
+                name: "Surat Keterangan Pengantar Warga",
+                title: "SURAT KETERANGAN PENGANTAR WARGA",
+                defaultSigners: ["sig-2", "sig-6"],
+                content: `
+                    <p>Yang bertanda tangan di bawah ini, Pengurus RW 16 Kelurahan Pedurungan Baru, Kecamatan Pedurungan, Kota Semarang dengan ini menerangkan bahwa:</p>
+                    <br>
+                    <table style="width: 100%; margin-left: 20px;">
+                        <tbody>
+                            <tr>
+                                <td style="width: 180px; padding: 3px 0;">Nama Lengkap</td>
+                                <td style="width: 15px;">:</td>
+                                <td><strong>ANDIKA PRASETYO</strong></td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 3px 0;">Alamat Rumah</td>
+                                <td>:</td>
+                                <td>Jl. Pedurungan Indah Raya No. 12, RT 01/16</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 3px 0;">Keperluan</td>
+                                <td>:</td>
+                                <td>Persyaratan Pengurusan Beasiswa Pendidikan Berprestasi</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <br>
+                    <p>Nama yang tertera di atas adalah benar warga kami yang berdomisili sah di lingkungan RW 16, berkelakuan baik, serta aktif berpartisipasi dalam berbagai agenda gotong royong warga.</p>
+                    <br>
+                    <p>Demikian surat keterangan pengantar ini dibuat dengan sebenarnya agar dapat dipergunakan sebagaimana mestinya.</p>
+                `
+            }
+        ];
+
+        // --- 3. DAFTAR PERAN AKUN (SIMULASI LOGIN USER) ---
+        const userRoles = [
+            { id: "admin", name: "Admin (Sekretariat / Pembuat Surat)", type: "admin" },
+            { id: "sig-1", name: "Aditya Pratama (Ketua Karang Taruna)", type: "pejabat", signatureId: "sig-1" },
+            { id: "sig-2", name: "H. Ahmad Subarjo (Ketua RW 16)", type: "pejabat", signatureId: "sig-2" },
+            { id: "sig-3", name: "Siti Aminah, S.E. (Sekretaris Kartar)", type: "pejabat", signatureId: "sig-3" },
+            { id: "sig-4", name: "Budi Santoso, S.IP (Pembina Kartar)", type: "pejabat", signatureId: "sig-4" },
+            { id: "sig-5", name: "Hendro Gunawan (Bendahara Kartar)", type: "pejabat", signatureId: "sig-5" },
+            { id: "sig-6", name: "Drs. Wahyu Hidayat (Sekretaris RW)", type: "pejabat", signatureId: "sig-6" }
+        ];
+
+        let currentUserRole = "admin";
+        let activeSignerIds = ["sig-1", "sig-3", "sig-2"];
+        
+        let documentApprovals = {
+            "sig-1": false,
+            "sig-2": false,
+            "sig-3": false,
+            "sig-4": false,
+            "sig-5": false,
+            "sig-6": false
+        };
+
+        // --- STREAMING_CHUNK: Initializing components on screen load... ---
+        window.onload = function() {
+            initAppDatabase();
+            loadTemplatesDropdown();
+            initUserRolesDropdown();
+            renderSignersCheckboxList();
+            loadTemplate();
+            initSignaturePad();
+            applyCurrentUserInterface();
+        };
+
+        function initAppDatabase() {
+            const savedSigs = localStorage.getItem('kartar_sigs_db');
+            if (savedSigs) {
+                signaturesDb = JSON.parse(savedSigs);
+            } else {
+                localStorage.setItem('kartar_sigs_db', JSON.stringify(signaturesDb));
+            }
+
+            const savedTemplates = localStorage.getItem('kartar_templates_db');
+            if (savedTemplates) {
+                templatesDb = JSON.parse(savedTemplates);
+            } else {
+                localStorage.setItem('kartar_templates_db', JSON.stringify(templatesDb));
+            }
+        }
+
+        // --- 4. AKUN USER INTERFACE CONTROLLER ---
+        function initUserRolesDropdown() {
+            const select = document.getElementById('user-role-select');
+            select.innerHTML = '';
+            
+            userRoles.forEach(role => {
+                const opt = document.createElement('option');
+                opt.value = role.id;
+                opt.textContent = role.name;
+                select.appendChild(opt);
+            });
+            select.value = currentUserRole;
+        }
+
+        function switchUserRole(roleId) {
+            currentUserRole = roleId;
+            const activeRoleObj = userRoles.find(r => r.id === roleId);
+            document.getElementById('current-user-display').textContent = activeRoleObj.name;
+
+            applyCurrentUserInterface();
+            showToast(`Sekarang masuk sebagai: ${activeRoleObj.name}`, 'success');
+        }
+
+        function applyCurrentUserInterface() {
+            const editorToolbar = document.getElementById('editor-toolbar');
+            const editorContent = document.getElementById('live-isi-surat');
+            const inputs = document.querySelectorAll('#tab-editor input, #tab-editor select:not(#user-role-select)');
+            const kopElements = document.querySelectorAll('#default-kop-surat [contenteditable]');
+            
+            if (currentUserRole === 'admin') {
+                editorToolbar.style.display = 'flex';
+                editorContent.setAttribute('contenteditable', 'true');
+                kopElements.forEach(el => el.setAttribute('contenteditable', 'true'));
+                inputs.forEach(input => input.removeAttribute('disabled'));
+                document.getElementById('ai-prompt-input').removeAttribute('disabled');
+            } else {
+                editorToolbar.style.display = 'none';
+                editorContent.setAttribute('contenteditable', 'false');
+                kopElements.forEach(el => el.setAttribute('contenteditable', 'false'));
+                inputs.forEach(input => input.setAttribute('disabled', 'true'));
+                document.getElementById('ai-prompt-input').setAttribute('disabled', 'true');
+                
+                const terminalSelect = document.getElementById('terminal-pejabat-select');
+                if (terminalSelect) {
+                    terminalSelect.value = currentUserRole;
+                }
+            }
+            
+            renderSignaturesGridOnPaper();
+            initApprovalTerminalDropdown();
+        }
+
+        // --- 5. MANAGING TEMPLATES ---
+        function loadTemplatesDropdown() {
+            const select = document.getElementById('template-select');
+            select.innerHTML = '';
+            templatesDb.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.code;
+                opt.textContent = t.name;
+                select.appendChild(opt);
+            });
+        }
+
+        function loadTemplate() {
+            const select = document.getElementById('template-select');
+            const template = templatesDb.find(t => t.code === select.value);
+            
+            if (template) {
+                const randomNum = Math.floor(100 + Math.random() * 900);
+                const year = new Date().getFullYear();
+                const defaultNumber = `${randomNum}/KT-PB16/${getMonthRoman()}/${year}`;
+
+                document.getElementById('input-nomor-surat').value = defaultNumber;
+                document.getElementById('input-judul-surat').value = template.title;
+                document.getElementById('live-isi-surat').innerHTML = template.content.trim();
+                
+                activeSignerIds = [...template.defaultSigners];
+                
+                resetApprovals();
+                updateLiveFields();
+                renderSignersCheckboxList();
+                renderSignaturesGridOnPaper();
+                initApprovalTerminalDropdown();
+            }
+        }
+
+        function resetApprovals() {
+            for (let key in documentApprovals) {
+                documentApprovals[key] = false;
+            }
+        }
+
+        function getMonthRoman() {
+            const romans = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
+            return romans[new Date().getMonth()];
+        }
+
+        function updateLiveFields() {
+            const no = document.getElementById('input-nomor-surat').value;
+            const title = document.getElementById('input-judul-surat').value;
+
+            document.getElementById('live-nomor-surat').textContent = no || "....................................";
+            document.getElementById('live-judul-surat').textContent = title || "SURAT REVISI ANGGARAN";
+        }
+
+        function changeDocumentFont(fontFamily) {
+            document.getElementById('paper-element').style.fontFamily = `'${fontFamily}', serif`;
+        }
+
+        // --- 6. CHECKLIST SIGNER DI SIDEBAR ---
+        function renderSignersCheckboxList() {
+            const container = document.getElementById('signers-checkbox-list');
+            container.innerHTML = '';
+
+            signaturesDb.forEach(sig => {
+                const isChecked = activeSignerIds.includes(sig.id) ? 'checked' : '';
+                const disabledAttr = (currentUserRole !== 'admin') ? 'disabled' : '';
+
+                const div = document.createElement('div');
+                div.className = "flex items-center space-x-3 p-2 rounded-lg hover:bg-slate-100 transition";
+                div.innerHTML = `
+                    <input type="checkbox" id="check-${sig.id}" onchange="toggleSigner('${sig.id}')" ${isChecked} ${disabledAttr} class="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 cursor-pointer">
+                    <label for="check-${sig.id}" class="text-xs text-slate-700 cursor-pointer flex-1">
+                        <span class="block font-bold text-slate-800">${sig.position}</span>
+                        <span class="text-[10px] text-slate-500 font-normal">${sig.name}</span>
+                    </label>
+                `;
+                container.appendChild(div);
+            });
+
+            document.getElementById('signer-count-badge').textContent = `${activeSignerIds.length} Diajukan`;
+        }
+
+        function toggleSigner(id) {
+            if (activeSignerIds.includes(id)) {
+                if (activeSignerIds.length === 1) {
+                    showToast("Satu surat harus diajukan minimal ke 1 penandatangan!", "warning");
+                    document.getElementById(`check-${id}`).checked = true;
+                    return;
+                }
+                activeSignerIds = activeSignerIds.filter(item => item !== id);
+                documentApprovals[id] = false;
+            } else {
+                if (activeSignerIds.length >= 5) {
+                    showToast("Maksimal 5 penandatangan agar kertas A4 rapi!", "warning");
+                    document.getElementById(`check-${id}`).checked = false;
+                    return;
+                }
+                activeSignerIds.push(id);
+                documentApprovals[id] = false;
+            }
+
+            document.getElementById('signer-count-badge').textContent = `${activeSignerIds.length} Diajukan`;
+            renderSignaturesGridOnPaper();
+            initApprovalTerminalDropdown();
+        }
+
+        // --- STREAMING_CHUNK: Managing live editor changes and synching profile structures... ---
+        function syncSignerNameChange(id, newName) {
+            const sig = signaturesDb.find(s => s.id === id);
+            if (sig) {
+                sig.name = newName.trim();
+                localStorage.setItem('kartar_sigs_db', JSON.stringify(signaturesDb));
+                updateCheckboxLabelsAndTerminalQuietly(id, sig.name, sig.position);
+            }
+        }
+
+        function syncSignerPositionChange(id, newPosition) {
+            const sig = signaturesDb.find(s => s.id === id);
+            if (sig) {
+                sig.position = newPosition.trim();
+                localStorage.setItem('kartar_sigs_db', JSON.stringify(signaturesDb));
+                updateCheckboxLabelsAndTerminalQuietly(id, sig.name, sig.position);
+            }
+        }
+
+        function updateCheckboxLabelsAndTerminalQuietly(id, name, position) {
+            const checkLabel = document.querySelector(`label[for="check-${id}"]`);
+            if (checkLabel) {
+                checkLabel.innerHTML = `
+                    <span class="block font-bold text-slate-800">${position}</span>
+                    <span class="text-[10px] text-slate-500 font-normal">${name}</span>
+                `;
+            }
+            const select = document.getElementById('terminal-pejabat-select');
+            if (select) {
+                const option = select.querySelector(`option[value="${id}"]`);
+                if (option) {
+                    const statusSuffix = (documentApprovals[id] === true) ? ' [✅ SUDAH TTD]' : ' [⏳ MENUNGGU]';
+                    option.textContent = `${position} - ${name}${statusSuffix}`;
+                }
+            }
+        }
+
+        // --- STREAMING_CHUNK: Rendering signatures into document... ---
+        function renderSignaturesGridOnPaper() {
+            const gridContainer = document.getElementById('live-signatures-grid');
+            gridContainer.innerHTML = '';
+
+            const jumlahSignee = activeSignerIds.length;
+            const selectedSigners = activeSignerIds.map(id => signaturesDb.find(sig => sig.id === id)).filter(Boolean);
+
+            if (jumlahSignee === 1) {
+                gridContainer.className = "flex justify-end w-full";
+            } else if (jumlahSignee === 2) {
+                gridContainer.className = "grid grid-cols-2 gap-20 w-full";
+            } else if (jumlahSignee === 3) {
+                gridContainer.className = "grid grid-cols-3 gap-6 w-full";
+            } else if (jumlahSignee === 4) {
+                gridContainer.className = "grid grid-cols-2 gap-y-12 gap-x-20 w-full";
+            } else {
+                gridContainer.className = "grid grid-cols-3 gap-y-12 gap-x-6 w-full";
+            }
+
+            selectedSigners.forEach((sig, index) => {
+                const dateText = (jumlahSignee === 1 || index === selectedSigners.length - 1) 
+                    ? `Semarang, ${getFormattedDate()}` 
+                    : "&nbsp;";
+
+                const isApproved = documentApprovals[sig.id] === true;
+
+                let ttdBoxHtml = "";
+                if (isApproved) {
+                    ttdBoxHtml = `
+                        <div class="h-20 w-full flex items-center justify-center relative my-2 overflow-hidden bg-transparent">
+                            <img src="${sig.image}" class="max-h-20 max-w-[150px] object-contain block mix-blend-multiply" alt="Tanda Tangan">
+                            <div class="absolute inset-0 border border-emerald-500/20 bg-emerald-500/5 flex items-center justify-center rounded select-none pointer-events-none">
+                                <span class="text-[8px] font-bold text-emerald-600 border border-emerald-600 px-1 py-0.2 rounded rotate-12 uppercase tracking-widest bg-white/80">VERIFIED</span>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    ttdBoxHtml = `
+                        <div class="h-20 w-full flex flex-col items-center justify-center my-2 border border-dashed border-amber-300 rounded bg-amber-50/50 p-2 text-center relative select-none">
+                            <i class="fa-solid fa-clock-rotate-left text-amber-500 text-lg mb-1 animate-pulse"></i>
+                            <span class="text-[8px] font-bold text-amber-700 tracking-wide">MENUNGGU VERIFIKASI</span>
+                            <span class="text-[7px] text-slate-400">Gunakan PIN terminal di bawah</span>
+                        </div>
+                    `;
+                }
+
+                const block = document.createElement('div');
+                block.className = `text-center flex flex-col items-center ${jumlahSignee === 5 && index >= 3 ? 'col-span-1 mx-auto' : ''}`;
+                
+                if (jumlahSignee === 5 && index === 3) {
+                    block.style.gridColumnStart = "1";
+                    block.style.gridColumnEnd = "3";
+                    block.style.marginLeft = "auto";
+                    block.style.marginRight = "auto";
+                }
+                if (jumlahSignee === 5 && index === 4) {
+                    block.style.gridColumnStart = "2";
+                    block.style.gridColumnEnd = "4";
+                    block.style.marginLeft = "auto";
+                    block.style.marginRight = "auto";
+                }
+
+                block.innerHTML = `
+                    <div style="font-family: inherit;" class="w-[180px]">
+                        <p class="text-[12pt] leading-tight text-slate-700 h-[20px] mb-1" contenteditable="true">${dateText}</p>
+                        <p class="text-[12pt] font-semibold leading-normal uppercase mb-2 text-slate-800" contenteditable="true" oninput="syncSignerPositionChange('${sig.id}', this.textContent)" title="Klik untuk edit jabatan">${sig.position}</p>
+                        ${ttdBoxHtml}
+                        <p class="text-[12pt] font-bold leading-normal uppercase underline mb-0.5 text-slate-900" contenteditable="true" oninput="syncSignerNameChange('${sig.id}', this.textContent)" title="Klik untuk edit nama">${sig.name}</p>
+                    </div>
+                `;
+                gridContainer.appendChild(block);
+            });
+        }
+
+        // --- 7. SECURE APPROVAL TERMINAL LOGIC ---
+        function initApprovalTerminalDropdown() {
+            const select = document.getElementById('terminal-pejabat-select');
+            select.innerHTML = '';
+
+            const selectedSigners = activeSignerIds.map(id => signaturesDb.find(sig => sig.id === id)).filter(Boolean);
+            
+            selectedSigners.forEach(sig => {
+                const statusSuffix = (documentApprovals[sig.id] === true) ? ' [✅ SUDAH TTD]' : ' [⏳ MENUNGGU]';
+                const opt = document.createElement('option');
+                opt.value = sig.id;
+                opt.textContent = `${sig.position} - ${sig.name}${statusSuffix}`;
+                select.appendChild(opt);
+            });
+        }
+
+        function approveSignatureFromTerminal() {
+            const signerId = document.getElementById('terminal-pejabat-select').value;
+            const inputPin = document.getElementById('terminal-pin-input').value.trim();
+
+            if (!signerId) {
+                showToast("Pilih pejabat yang bertindak terlebih dahulu!", "warning");
+                return;
+            }
+
+            const targetPejabat = signaturesDb.find(s => s.id === signerId);
+            if (!targetPejabat) return;
+
+            if (inputPin !== targetPejabat.pin) {
+                showToast("PIN Keamanan Salah! Akses Tanda Tangan Ditolak.", "error");
+                return;
+            }
+
+            documentApprovals[signerId] = true;
+            renderSignaturesGridOnPaper();
+            initApprovalTerminalDropdown();
+            
+            document.getElementById('terminal-pin-input').value = "";
+            showToast(`Sukses! TTD ${targetPejabat.name} terverifikasi dan ditempel di dokumen.`, "success");
+        }
+
+        // --- 8. TEMPLATE MANAGEMENT TABLE VIEW ---
+        function renderTemplatesTable() {
+            const tbody = document.getElementById('templates-list-table-body');
+            tbody.innerHTML = '';
+
+            templatesDb.forEach((t, index) => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-slate-100 hover:bg-slate-50";
+                tr.innerHTML = `
+                    <td class="p-4 font-semibold text-slate-800">${t.name}</td>
+                    <td class="p-4"><span class="bg-slate-100 text-slate-700 text-xs px-2 py-1 rounded font-mono">${t.code}</span></td>
+                    <td class="p-4 text-xs text-slate-500">${t.defaultSigners.join(', ')}</td>
+                    <td class="p-4 text-right space-x-1">
+                        <button onclick="editTemplateForm('${t.code}')" class="text-indigo-600 hover:bg-indigo-50 p-2 rounded-lg transition" title="Edit Template">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="deleteTemplate('${t.code}')" class="text-rose-600 hover:bg-rose-50 p-2 rounded-lg transition" title="Hapus Template">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function deleteTemplate(code) {
+            if (templatesDb.length <= 1) {
+                showToast("Gagal! Harus menyisakan minimal 1 template default di sistem.", "error");
+                return;
+            }
+            templatesDb = templatesDb.filter(t => t.code !== code);
+            localStorage.setItem('kartar_templates_db', JSON.stringify(templatesDb));
+            renderTemplatesTable();
+            loadTemplatesDropdown();
+            showToast("Template berhasil dihapus.", "success");
+        }
+
+        function openTemplateFormModal() {
+            document.getElementById('template-modal').classList.remove('hidden');
+            document.getElementById('template-modal-title').textContent = "Tambah Template Surat Baru";
+            
+            document.getElementById('form-template-index').value = "";
+            document.getElementById('form-template-name').value = "";
+            document.getElementById('form-template-code').value = "";
+            document.getElementById('form-template-signers').value = "sig-1, sig-2";
+            document.getElementById('form-template-content').value = "";
+        }
+
+        function editTemplateForm(code) {
+            const template = templatesDb.find(t => t.code === code);
+            if (!template) return;
+
+            document.getElementById('template-modal').classList.remove('hidden');
+            document.getElementById('template-modal-title').textContent = "Edit Template Surat";
+            
+            document.getElementById('form-template-index').value = code;
+            document.getElementById('form-template-name').value = template.name;
+            document.getElementById('form-template-code').value = template.code;
+            document.getElementById('form-template-signers').value = template.defaultSigners.join(', ');
+            document.getElementById('form-template-content').value = template.content.trim();
+        }
+
+        function closeTemplateFormModal() {
+            document.getElementById('template-modal').classList.add('hidden');
+        }
+
+        function saveCustomTemplate() {
+            const index = document.getElementById('form-template-index').value;
+            const name = document.getElementById('form-template-name').value.trim();
+            const code = document.getElementById('form-template-code').value.trim();
+            const signersStr = document.getElementById('form-template-signers').value.trim();
+            const content = document.getElementById('form-template-content').value.trim();
+
+            if (!name || !code || !content) {
+                showToast("Mohon lengkapi semua isian formulir!", "warning");
+                return;
+            }
+
+            const defaultSigners = signersStr.split(',').map(s => s.trim()).filter(Boolean);
+            const payload = { name, code, defaultSigners, content };
+
+            if (index) {
+                const idx = templatesDb.findIndex(t => t.code === index);
+                if (idx !== -1) templatesDb[idx] = payload;
+            } else {
+                if (templatesDb.some(t => t.code === code)) {
+                    showToast("Kode unik template sudah digunakan!", "error");
+                    return;
+                }
+                templatesDb.push(payload);
+            }
+
+            localStorage.setItem('kartar_templates_db', JSON.stringify(templatesDb));
+            showToast("Template berhasil disimpan ke sistem!", "success");
+            closeTemplateFormModal();
+            renderTemplatesTable();
+            loadTemplatesDropdown();
+        }
+
+        // --- 9. DATABASE PEJABAT PROFILE EDITOR ---
+        function renderSignaturesDatabase() {
+            const grid = document.getElementById('signatures-grid-db');
+            grid.innerHTML = '';
+
+            signaturesDb.forEach(sig => {
+                const activeClass = sig.isActive 
+                    ? 'border-emerald-500 bg-emerald-50 text-emerald-700' 
+                    : 'border-slate-300 bg-slate-100 text-slate-500';
+
+                const card = document.createElement('div');
+                card.className = "bg-white border border-slate-200 rounded-2xl p-6 shadow-sm relative flex flex-col justify-between hover:shadow transition";
+                card.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <span class="px-2 py-1 rounded text-[10px] font-extrabold uppercase tracking-wider ${activeClass}">
+                                    ${sig.position}
+                                </span>
+                                <h4 class="text-lg font-bold text-slate-800 mt-2">${sig.name}</h4>
+                            </div>
+                            <div class="flex space-x-1">
+                                <button onclick="openEditPejabatModal('${sig.id}')" class="text-indigo-600 hover:bg-indigo-50 p-2 rounded-lg transition" title="Edit Profil">
+                                    <i class="fa-solid fa-user-pen"></i>
+                                </button>
+                                <button onclick="deleteSignature('${sig.id}')" class="text-slate-400 hover:text-rose-600 transition p-2 rounded-lg" title="Hapus Pejabat">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="border border-slate-100 rounded-xl bg-slate-50 h-32 flex items-center justify-center p-4">
+                            <img src="${sig.image}" class="max-h-full max-w-full object-contain mix-blend-multiply" alt="TTD">
+                        </div>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <span class="text-slate-400 font-mono text-[9px]">ID: ${sig.id} | PIN: ${sig.pin}</span>
+                        <div class="flex items-center space-x-2">
+                            <span class="font-medium text-slate-600">Aktifkan</span>
+                            <button onclick="toggleActiveSignature('${sig.id}')" class="w-10 h-6 flex items-center ${sig.isActive ? 'bg-emerald-500' : 'bg-slate-300'} rounded-full p-1 cursor-pointer transition-colors">
+                                <div class="bg-white w-4 h-4 rounded-full shadow-md transform ${sig.isActive ? 'translate-x-4' : 'translate-x-0'} transition-transform"></div>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function openEditPejabatModal(id) {
+            const pejabat = signaturesDb.find(s => s.id === id);
+            if (!pejabat) return;
+
+            document.getElementById('edit-pejabat-modal').classList.remove('hidden');
+            document.getElementById('edit-pejabat-id').value = pejabat.id;
+            document.getElementById('edit-pejabat-name').value = pejabat.name;
+            document.getElementById('edit-pejabat-position').value = pejabat.position;
+            document.getElementById('edit-pejabat-pin').value = pejabat.pin;
+        }
+
+        function closeEditPejabatModal() {
+            document.getElementById('edit-pejabat-modal').classList.add('hidden');
+        }
+
+        function saveEditPejabat() {
+            const id = document.getElementById('edit-pejabat-id').value;
+            const name = document.getElementById('edit-pejabat-name').value.trim();
+            const position = document.getElementById('edit-pejabat-position').value.trim();
+            const pin = document.getElementById('edit-pejabat-pin').value.trim();
+
+            if (!name || !position || !pin) {
+                showToast("Formulir tidak boleh kosong!", "warning");
+                return;
+            }
+
+            const targetIdx = signaturesDb.findIndex(s => s.id === id);
+            if (targetIdx !== -1) {
+                signaturesDb[targetIdx].name = name;
+                signaturesDb[targetIdx].position = position;
+                signaturesDb[targetIdx].pin = pin;
+
+                localStorage.setItem('kartar_sigs_db', JSON.stringify(signaturesDb));
+                showToast("Profil pejabat berhasil diperbarui!", "success");
+                closeEditPejabatModal();
+                renderSignaturesDatabase();
+                renderSignersCheckboxList();
+                renderSignaturesGridOnPaper();
+                initApprovalTerminalDropdown();
+            }
+        }
+
+        function deleteSignature(id) {
+            if (signaturesDb.length <= 1) {
+                showToast('Gagal! Harus menyisakan minimal 1 pejabat dalam database.', 'error');
+                return;
+            }
+            signaturesDb = signaturesDb.filter(sig => sig.id !== id);
+            activeSignerIds = activeSignerIds.filter(activeId => activeId !== id);
+            if (activeSignerIds.length === 0 && signaturesDb.length > 0) {
+                activeSignerIds = [signaturesDb[0].id];
+            }
+            localStorage.setItem('kartar_sigs_db', JSON.stringify(signaturesDb));
+            renderSignaturesDatabase();
+            renderSignersCheckboxList();
+            renderSignaturesGridOnPaper();
+            initApprovalTerminalDropdown();
+            showToast('Tanda tangan pengurus berhasil dihapus.', 'success');
+        }
+
+        function toggleActiveSignature(id) {
+            const sig = signaturesDb.find(s => s.id === id);
+            if (sig) {
+                sig.isActive = !sig.isActive;
+                localStorage.setItem('kartar_sigs_db', JSON.stringify(signaturesDb));
+                renderSignaturesDatabase();
+                showToast(`Status keaktifan ${sig.name} diperbarui.`, 'success');
+            }
+        }
+
+        // --- SIGNATURE CANVAS ENGINE ---
+        let canvas, ctx, drawing = false;
+
+        function initSignaturePad() {
+            canvas = document.getElementById('sig-canvas');
+            ctx = canvas.getContext('2d');
+            resizeCanvas();
+
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+
+            canvas.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                startDrawing(e.touches[0]);
+            }, { passive: false });
+            canvas.addEventListener('touchmove', function(e) {
+                e.preventDefault();
+                draw(e.touches[0]);
+            }, { passive: false });
+            canvas.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                stopDrawing();
+            }, { passive: false });
+        }
+
+        function resizeCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            ctx.strokeStyle = '#312e81'; 
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+        }
+
+        function startDrawing(e) {
+            drawing = true;
+            document.getElementById('canvas-placeholder').classList.add('hidden');
+            const coords = getCanvasCoords(e);
+            ctx.beginPath();
+            ctx.moveTo(coords.x, coords.y);
+        }
+
+        function draw(e) {
+            if (!drawing) return;
+            const coords = getCanvasCoords(e);
+            ctx.lineTo(coords.x, coords.y);
+            ctx.stroke();
+        }
+
+        function stopDrawing() {
+            drawing = false;
+        }
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            document.getElementById('canvas-placeholder').classList.remove('hidden');
+        }
+
+        function getCanvasCoords(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.clientX || e.pageX;
+            const clientY = e.clientY || e.pageY;
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+        function openSignatureModal() {
+            document.getElementById('signature-modal').classList.remove('hidden');
+            document.getElementById('modal-name').value = '';
+            document.getElementById('modal-position').value = '';
+            document.getElementById('modal-pin').value = '1234';
+            setTimeout(resizeCanvas, 100);
+        }
+
+        function closeSignatureModal() {
+            document.getElementById('signature-modal').classList.add('hidden');
+            clearCanvas();
+        }
+
+        function saveSignature() {
+            const name = document.getElementById('modal-name').value.trim();
+            const position = document.getElementById('modal-position').value.trim();
+            const pin = document.getElementById('modal-pin').value.trim();
+            
+            if (!name || !position || !pin) {
+                showToast('Formulir wajib diisi!', 'warning');
+                return;
+            }
+
+            const blank = document.createElement('canvas');
+            blank.width = canvas.width;
+            blank.height = canvas.height;
+            if (canvas.toDataURL() === blank.toDataURL()) {
+                showToast('Silakan gambar coretan tanda tangan Anda terlebih dahulu.', 'warning');
+                return;
+            }
+
+            const dataUrl = canvas.toDataURL('image/png');
+
+            const newSignature = {
+                id: 'sig-' + Date.now(),
+                name: name,
+                position: position,
+                image: dataUrl,
+                pin: pin,
+                isActive: true
+            };
+
+            signaturesDb.push(newSignature);
+            localStorage.setItem('kartar_sigs_db', JSON.stringify(signaturesDb));
+            
+            showToast('Pejabat Baru & TTD Berhasil Disimpan!', 'success');
+            closeSignatureModal();
+            
+            renderSignersCheckboxList();
+            renderSignaturesGridOnPaper();
+            renderSignaturesDatabase();
+            initApprovalTerminalDropdown();
+        }
+
+        // --- 10. WYSIWYG EDITOR ACTIONS ---
+        function formatDoc(command, value = null) {
+            document.execCommand(command, false, value);
+            document.getElementById('live-isi-surat').focus();
+        }
+
+        // --- 11. PDF EXPORT HANDLER ---
+        function downloadPDF() {
+            const unapprovedSigners = activeSignerIds.filter(id => documentApprovals[id] !== true);
+            if (unapprovedSigners.length > 0) {
+                const names = unapprovedSigners.map(id => signaturesDb.find(s => s.id === id)?.name || id).join(', ');
+                showToast(`Gagal Ekspor! Masih menunggu verifikasi persetujuan dari: ${names}`, "error");
+                return;
+            }
+
+            const element = document.getElementById('paper-element');
+            const fileCleanName = 'surat_resmi_rw16_' + Date.now() + '.pdf';
+
+            showToast('Mengekspor file dokumen resmi...', 'success');
+
+            const opt = {
+                margin: 0,
+                filename: fileCleanName,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, logging: false },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                showToast('Dokumen resmi berhasil diekspor dan diunduh!', 'success');
+            }).catch(err => {
+                showToast('Gagal memproses ekspor PDF', 'error');
+                console.error(err);
+            });
+        }
+
+        // --- 12. AI SIMULATORS (LOCAL INTUITIVE ALGORITHMS) ---
+        function generateAiReferenceNumber() {
+            const select = document.getElementById('template-select');
+            const templateCode = select.value;
+            
+            let prefix = "000";
+            if (templateCode === "surat_anggaran") prefix = "024/SP-Angg";
+            else if (templateCode === "undangan_rapat") prefix = "087/U-Rapat";
+            else prefix = "112/K-Pgt";
+
+            const year = new Date().getFullYear();
+            const val = `${prefix}/KT-PB16/${getMonthRoman()}/${year}`;
+            
+            document.getElementById('input-nomor-surat').value = val;
+            updateLiveFields();
+            showToast("Nomor surat resmi berhasil di-generate AI!", "success");
+        }
+
+        function generateLetterContentWithAi() {
+            const promptInput = document.getElementById('ai-prompt-input').value.trim();
+            if (!promptInput) {
+                showToast("Tulis instruksi singkat di kolom AI terlebih dahulu!", "warning");
+                return;
+            }
+
+            showToast("AI sedang merangkai surat resmi...", "success");
+
+            setTimeout(() => {
+                let aiGeneratedHtml = "";
+                const dateText = getFormattedDate();
+
+                if (promptInput.toLowerCase().includes("anggaran") || promptInput.toLowerCase().includes("dana") || promptInput.toLowerCase().includes("biaya")) {
+                    aiGeneratedHtml = `
+                        <p>Kepada Yth.<br><strong>Dewan Penasihat Karang Taruna RW 16</strong><br>di Semarang</p>
+                        <br>
+                        <p>With respectful regards,</p>
+                        <p>Sehubungan dengan rencana agenda kerja Karang Taruna Pedurungan Baru RW 16 yang bertujuan untuk memajukan bakat pemuda, kami dari tim sekretariat mengajukan rencana penggunaan anggaran operasional kepengurusan resmi dengan rincian draf pengajuan terlampir.</p>
+                        <br>
+                        <p>Alokasi anggaran yang direncanakan akan sepenuhnya disalurkan pada penyediaan sarana prasarana olahraga pemuda di wilayah RW 16 dan pemeliharaan fasilitas Balai RW bersama.</p>
+                        <br>
+                        <p>Demikian surat pengantar pengajuan anggaran ini kami sampaikan secara terbuka, atas perhatian dan dukungan Bapak/Ibu kami haturkan terima kasih.</p>
+                    `;
+                } else if (promptInput.toLowerCase().includes("undangan") || promptInput.toLowerCase().includes("rapat") || promptInput.toLowerCase().includes("kumpul")) {
+                    aiGeneratedHtml = `
+                        <p>Kepada Yth.<br><strong>Rekan-Rekan Pengurus Karang Taruna RW 16</strong><br>di Semarang</p>
+                        <br>
+                        <p>Salam pemuda,</p>
+                        <p>Bersama surat undangan resmi ini, kami mengundang rekan-rekan pengurus dalam agenda rapat koordinasi strategis yang akan membahas kelanjutan program kerja sosial kemasyarakatan di Balai RW 16 pada akhir pekan ini.</p>
+                        <br>
+                        <p>Sangat diharapkan kehadiran penuh rekan-rekan sekalian guna merumuskan keputusan bersama demi kemajuan wilayah RW 16 Pedurungan Baru.</p>
+                        <br>
+                        <p>Demikian undangan ini disampaikan, atas komitmen dan partisipasi aktif rekan-rekan kami ucapkan terima kasih.</p>
+                    `;
+                } else {
+                    aiGeneratedHtml = `
+                        <p>Kepada Yth.<br><strong>Segenap Warga Pedurungan Baru RW 16</strong><br>di Semarang</p>
+                        <br>
+                        <p>Dengan hormat,</p>
+                        <p>Melalui pengumuman resmi ini, kami mengimbau dan mengajak seluruh warga serta pemuda-pemudi di lingkungan RW 16 untuk berpartisipasi aktif dalam kegiatan sosial kemasyarakatan yang akan dilaksanakan dalam waktu dekat ini.</p>
+                        <br>
+                        <p>Partisipasi dan dukungan langsung dari seluruh warga sangat berharga bagi kesuksesan dan keharmonisan lingkungan tempat tinggal kita bersama.</p>
+                        <br>
+                        <p>Demikian surat pengantar imbauan ini kami sampaikan, terima kasih atas perhatian dan kerja samanya.</p>
+                    `;
+                }
+
+                document.getElementById('live-isi-surat').innerHTML = aiGeneratedHtml;
+                showToast("Isi surat otomatis berhasil dibuat oleh AI!", "success");
+            }, 1000);
+        }
+
+        function getFormattedDate() {
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            return new Date().toLocaleDateString('id-ID', options);
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            const text = document.getElementById('toast-message');
+
+            text.textContent = message;
+
+            if (type === 'success') {
+                icon.className = "fa-solid fa-circle-check text-emerald-400 text-lg";
+                toast.className = "fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 transform transition-all duration-300 z-50 translate-y-0 opacity-100";
+            } else if (type === 'warning') {
+                icon.className = "fa-solid fa-circle-exclamation text-amber-400 text-lg";
+                toast.className = "fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 transform transition-all duration-300 z-50 translate-y-0 opacity-100";
+            } else {
+                icon.className = "fa-solid fa-circle-xmark text-rose-400 text-lg";
+                toast.className = "fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 transform transition-all duration-300 z-50 translate-y-0 opacity-100";
+            }
+
+            setTimeout(() => {
+                toast.className = "fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 transform transition-all duration-300 z-50 translate-y-20 opacity-0";
+            }, 3500);
+        }
+
+        // --- TAB BAR NAVIGATOR ---
+        function switchTab(tabId) {
+            document.getElementById('tab-editor').classList.add('hidden');
+            document.getElementById('tab-templates').classList.add('hidden');
+            document.getElementById('tab-signatures').classList.add('hidden');
+
+            document.getElementById(tabId).classList.remove('hidden');
+
+            const btnEditor = document.getElementById('btn-tab-editor');
+            const btnTemplates = document.getElementById('btn-tab-templates');
+            const btnSignatures = document.getElementById('btn-tab-signatures');
+
+            btnEditor.className = "bg-indigo-950 text-indigo-200 px-4 py-2 rounded-lg font-medium text-sm hover:bg-indigo-900 transition flex items-center gap-2";
+            btnTemplates.className = "bg-indigo-950 text-indigo-200 px-4 py-2 rounded-lg font-medium text-sm hover:bg-indigo-900 transition flex items-center gap-2";
+            btnSignatures.className = "bg-indigo-950 text-indigo-200 px-4 py-2 rounded-lg font-medium text-sm hover:bg-indigo-900 transition flex items-center gap-2";
+
+            if (tabId === 'tab-editor') {
+                btnEditor.className = "bg-indigo-800 text-white px-4 py-2 rounded-lg font-medium text-sm hover:bg-indigo-700 transition flex items-center gap-2 border-b-2 border-white";
+                renderSignaturesGridOnPaper();
+            } else if (tabId === 'tab-templates') {
+                btnTemplates.className = "bg-indigo-800 text-white px-4 py-2 rounded-lg font-medium text-sm hover:bg-indigo-700 transition flex items-center gap-2 border-b-2 border-white";
+                renderTemplatesTable();
+            } else {
+                btnSignatures.className = "bg-indigo-800 text-white px-4 py-2 rounded-lg font-medium text-sm hover:bg-indigo-700 transition flex items-center gap-2 border-b-2 border-white";
+                renderSignaturesDatabase();
+            }
+        }
+    </script>
+</body>
+</html>
